@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="style/style.css">
+
+    <style type="text/css" media="print">
+        .noprint {
+            display: none
+        }
+        
+        .print {
+            display: block !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header class="el-header noprint">
+            <div class="icon-btns">
+                <i class="icon-list" @click="changeLeftMenu"></i>
+                <i class="icon-skip_previous" v-bind:class="{'disabled': currentPage == 1}" @click="changeCurrentPage('first')"></i>
+                <i class="icon-play_arrow prev-icon" v-bind:class="{'disabled': currentPage == 1}" @click="changeCurrentPage('prev')"></i>
+                <i class="icon-play_arrow" v-bind:class="{'disabled': currentPage == pageNum}" @click="changeCurrentPage('next')"></i>
+                <i class="icon-skip_next" v-bind:class="{'disabled': currentPage == pageNum}" @click="changeCurrentPage('last')"></i>
+                <select v-model="currentPage">
+                    <option v-for="page in pageNum" v-bind:value="page">page {{ page }}</option>
+                </select>
+                <i class="icon-zoom_in" v-bind:class="{'disabled': zoomNum == 2}" @click="modifyZoom('in')"></i>
+                <select v-model="zoomNum">
+                    <option value="0.5">50%</option>
+                    <option value="0.6">60%</option>
+                    <option value="0.7">70%</option>
+                    <option value="0.8">80%</option>
+                    <option value="0.9">90%</option>
+                    <option value="1.0" selected>100%</option>
+                    <option value="1.1">110%</option>
+                    <option value="1.2">120%</option>
+                    <option value="1.3">130%</option>
+                    <option value="1.4">140%</option>
+                    <option value="1.5">150%</option>
+                    <option value="1.6">160%</option>
+                    <option value="1.7">170%</option>
+                    <option value="1.8">180%</option>
+                    <option value="1.9">190%</option>
+                    <option value="2.0">200%</option>
+                </select>
+                <i class="icon-zoom_out" v-bind:class="{'disabled': zoomNum == 0.5}" @click="modifyZoom('out')"></i>
+                <i class="icon-format_align_left" @click="textAlign = 'left'"></i>
+                <i class="icon-format_align_center" @click="textAlign = 'center'"></i>
+                <i class="icon-format_align_right" @click="textAlign = 'right'"></i>
+                <i class="icon-print" @click="window.print()"></i>
+            </div>
+        </header>
+
+        <aside class="noprint" width="240px" v-show="ifMenuShow">
+            <nav class="tabNav">
+                <ul>
+                    <li v-bind:class="{ 'curr': currentNav == 0 }" @click="currentNav = 0">Page</li>
+                    <li v-bind:class="{ 'curr': currentNav == 1 }" @click="currentNav = 1">Bookmark</li>
+                </ul>
+
+                <div class="clear"></div>
+            </nav>
+
+            <div class="tab-conent scrollbar" v-bind:style="{ height: asideHeight + 'px' }">
+
+            <section v-show="currentNav == 0">
+                <ul class="page-menu">
+                    <li v-for="page in pageNum" v-bind:class="{ 'curr': currentPage == page }" @click="changePage(page)"><i class="icon-file-text2"></i> page {{ page }}</li>
+                </ul>
+            </section>
+
+            <section v-show="currentNav == 1">
+                <ul class="page-menu">
+                    <li v-for="page in pageNum" v-bind:class="{ 'curr': currentPage == page }" @click="changePage(page)"><i class="icon-turned_in_not"></i> Bookmark {{ page }}</li>
+                </ul>
+            </section>
+        </div>
+
+        </aside>
+        <div class="main scrollbar noprint"  v-bind:style="{ height: mainHeight + 'px' }" v-bind:class="{ 'mainLeftM': ifMenuShow, 'aleft': textAlign === 'left','acenter': textAlign === 'center','aright': textAlign === 'right'}">
+            <div class="conent" v-html="pageContent" v-bind:style="zoomStyle"></div>
+
+            <div class="clear"></div>
+        </div>
+
+        <!--专门只为打印的内容-->
+        <div class="conent print" style="display:none" v-html="pageContent"></div>
+    </div>
+</body>
+<!-- 先引入 Vue -->
+<script src="js/vue.min.js"></script>
+<script>
+
+var app = new Vue({
+        el: '#app',
+        data: function() {
+            return {
+                // visible: false,
+                isCollapse: false,
+                currentNav: 0,
+                activeName2: 'first',
+                pageNum: 1, 
+                currentPage: 1,
+                pageContent: '',
+                asideHeight: 300,
+                mainHeight: 300,
+                ifMenuShow: true,
+                zoomNum: '1.0',
+                textAlign: 'left',
+                zoomStyle: {},
+                pageDatas: ['<div style="position:absolute;top:0.000000px;left:0.000000px"><nobr><img height="816.000000" width="1056.000000" src ="bgimg/bg00001.jpg"/></nobr></div><p><span style="font-family:Garamond;font-size:26.024570px;font-style:italic;font-weight:bold;color:#9DAC50;"><span style="position:absolute;top:148.799561px;left:870.567139px"><nobr>&amp; </nobr></span></span></p><p><span style="font-family:Garamond;font-size:29.406763px;font-style:italic;color:#EADEC4;"><span style="position:absolute;top:265.711090px;left:800.701721px"><nobr>PLANTAS </nobr></span></span></p><p><span style="font-family:Garamond;font-size:29.406763px;font-style:italic;color:#EADEC4;"><span style="position:absolute;top:304.350983px;left:802.741394px"><nobr>NATIVAS </nobr></span></span></p><p><span style="font-family:Arial Unicode MS;font-size:16.326557px;font-weight:bold;color:#000000;"><span style="position:absolute;top:382.219604px;left:23.487026px"><nobr>¿ Q U É S O N L A S </nobr></span></span></p><p><span style="font-family:Arial;font-size:16.326557px;font-weight:bold;color:#000000;"><span style="position:absolute;top:410.441803px;left:23.487026px"><nobr>P L A N T A S </nobr></span></span></p><p><span style="font-family:Arial;font-size:16.326557px;font-weight:bold;color:#000000;"><span style="position:absolute;top:438.664062px;left:23.487026px"><nobr>M E D I C I N A L E S ? </nobr></span></span></p><p><span style="font-family:Arial;font-size:13.146243px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:486.307190px;left:29.535048px"><nobr>Las plantas medicinales son </nobr></span><span style="position:absolute;top:510.220276px;left:29.535048px"><nobr>aquellas plantas usadas para tratar </nobr></span><span style="position:absolute;top:534.133423px;left:29.535048px"><nobr>enfermedades en las personas, </nobr></span><span style="position:absolute;top:558.046570px;left:29.535048px"><nobr>animales o incluso curar las </nobr></span><span style="position:absolute;top:581.959656px;left:29.535048px"><nobr>lesiones que llegamos a tener, tales </nobr></span><span style="position:absolute;top:605.872803px;left:29.535048px"><nobr>como una raspada o una herida </nobr></span><span style="position:absolute;top:629.785889px;left:29.535048px"><nobr>que sufrimos </nobr></span></span></p><p><span style="font-family:Garamond;font-size:13.165667px;font-style:italic;font-weight:bold;color:#000000;"><span style="position:absolute;top:382.180573px;left:400.104065px"><nobr>Las plantas medicinales mexicanas </nobr></span><span style="position:absolute;top:402.876862px;left:406.468750px"><nobr>son producto de armonía entre la </nobr></span></span></p><p><span style="font-family:Garamond;font-size:13.165667px;font-style:italic;font-weight:bold;color:#000000;"><span style="position:absolute;top:423.573151px;left:395.650238px"><nobr>tradición prehispánica y la europea. </nobr></span></span></p><p><span style="font-family:Arial;font-size:9.285000px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:649.229980px;left:421.067474px"><nobr>ALMENGOR CORDERO ERVIN </nobr></span></span></p><p><span style="font-family:Arial;font-size:9.285000px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:665.229980px;left:399.520599px"><nobr>ALVARADO LOPEZ ALEXA LIZBETH </nobr></span></span></p><p><span style="font-family:Arial;font-size:9.285000px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:681.229980px;left:379.536224px"><nobr>MORALES GUITIERREZ FEBE AMINADAB </nobr></span></span></p><p><span style="font-family:Arial;font-size:14.999999px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:140.427734px;left:845.065552px"><nobr>P </nobr></span></span></p><p><span style="font-family:Arial;font-size:15.000000px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:132.283447px;left:855.927002px"><nobr>L </nobr></span></span></p><p><span style="font-family:Arial;font-size:15.000000px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:124.176025px;left:865.501099px"><nobr>A NT </nobr></span></span></p><p><span style="font-family:Arial;font-size:14.999999px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:127.389648px;left:906.107666px"><nobr>A </nobr></span></span></p><p><span style="font-family:Arial;font-size:15.000000px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:134.055176px;left:918.928040px"><nobr>S </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:171.042526px;left:824.721191px;transform: rotate(90deg)"><nobr>M </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:187.302170px;left:834.499268px;transform: rotate(90deg)"><nobr>E </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:189.456345px;left:843.487793px"><nobr>D </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:198.836258px;left:856.945557px"><nobr>I </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:203.166870px;left:867.450623px"><nobr>C IN </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:200.381516px;left:909.504456px"><nobr>A </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997500px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:190.986572px;left:923.858826px"><nobr>L </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:184.663361px;left:921.513916px;transform: rotate(270deg)"><nobr>E </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.997499px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:170.518723px;left:928.755432px;transform: rotate(270deg)"><nobr>S </nobr></span></span></p>','<div style="position:absolute;top:0.000000px;left:0.000000px"><nobr><img height="816.000000" width="1056.000000" src ="bgimg/bg00002.jpg"/></nobr></div><p><span style="font-family:Arial;font-size:10.000980px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:109.234947px;left:505.282654px"><nobr>P </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000979px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:98.528404px;left:518.687378px"><nobr>A NT A </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000287px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:129.502640px;left:486.221802px;transform: rotate(90deg)"><nobr>M </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000285px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:142.000931px;left:493.748108px;transform: rotate(90deg)"><nobr>E </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000285px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:143.654053px;left:500.661194px"><nobr>D </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000285px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:150.868942px;left:511.011505px"><nobr>I </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000285px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:152.057449px;left:519.091064px"><nobr>C IN A </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000287px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:144.834793px;left:562.475586px"><nobr>L </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000286px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:139.973206px;left:560.669434px;transform: rotate(270deg)"><nobr>E </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.000286px;font-style:normal;font-weight:normal;color:#EADEC4;"><span style="position:absolute;top:129.091141px;left:566.237183px;transform: rotate(270deg)"><nobr>S </nobr></span></span></p><p><span style="font-family:Garamond;font-size:18.756329px;font-style:italic;font-weight:bold;color:#9DAC50;"><span style="position:absolute;top:115.754723px;left:521.429749px"><nobr>&amp; </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:426.122833px;left:93.042061px"><nobr>El conocimiento sobre las plantas </nobr></span><span style="position:absolute;top:444.937653px;left:93.042061px"><nobr>medicinales no solo es un legado </nobr></span><span style="position:absolute;top:463.752502px;left:93.042061px"><nobr>cultural invaluable, sino también </nobr></span><span style="position:absolute;top:482.567261px;left:93.042061px"><nobr>una fuente de esperanza para el </nobr></span><span style="position:absolute;top:501.382050px;left:93.042061px"><nobr>futuro de la medicina </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:539.011719px;left:93.042061px"><nobr>El cuidado de las plantas </nobr></span><span style="position:absolute;top:557.826538px;left:93.042061px"><nobr>medicinales comienza con su </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:576.641357px;left:93.042061px"><nobr>cultivo adecuado. Es importante </nobr></span><span style="position:absolute;top:595.456177px;left:93.042061px"><nobr>seleccionar un lugar con buena </nobr></span><span style="position:absolute;top:614.270935px;left:93.042061px"><nobr>exposición solar y suelo bien </nobr></span><span style="position:absolute;top:633.085754px;left:93.042061px"><nobr>drenado. Las plantas deben ser </nobr></span><span style="position:absolute;top:651.900635px;left:93.042061px"><nobr>regadas regularmente, pero </nobr></span><span style="position:absolute;top:670.715393px;left:93.042061px"><nobr>evitando el exceso de agua que </nobr></span><span style="position:absolute;top:689.530151px;left:93.042061px"><nobr>puede provocar enfermedades. </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:136.690262px;left:751.057373px"><nobr>El reciclado de las plantas </nobr></span><span style="position:absolute;top:155.505127px;left:751.057373px"><nobr>medicinales implica el uso de </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:174.319901px;left:751.057373px"><nobr>restos de plantas para crear </nobr></span><span style="position:absolute;top:193.134720px;left:751.057373px"><nobr>compost, que puede ser utilizado </nobr></span><span style="position:absolute;top:211.949539px;left:751.057373px"><nobr>como abono natural. Este proceso </nobr></span><span style="position:absolute;top:230.764374px;left:751.057373px"><nobr>no solo ayuda a reducir los </nobr></span><span style="position:absolute;top:249.579178px;left:751.057373px"><nobr>residuos, sino que también </nobr></span><span style="position:absolute;top:268.393982px;left:751.057373px"><nobr>enriquece el suelo y mejora la </nobr></span><span style="position:absolute;top:287.208832px;left:751.057373px"><nobr>salud de las plantas futuras. </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:324.838440px;left:751.057373px"><nobr>El cuidado y reciclado de las </nobr></span><span style="position:absolute;top:343.653198px;left:751.057373px"><nobr>plantas medicinales no solo </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:362.468048px;left:751.057373px"><nobr>garantiza su eficacia y </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:381.282837px;left:751.057373px"><nobr>disponibilidad, sino que también </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:400.097656px;left:751.057373px"><nobr>promueve prácticas agrícolas </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:418.912476px;left:751.057373px"><nobr>sostenibles para el medio </nobr></span></span></p><p><span style="font-family:Arial;font-size:10.343445px;font-style:normal;font-weight:normal;color:#000000;"><span style="position:absolute;top:437.727295px;left:751.057373px"><nobr>ambiente. </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;font-weight:bold;color:#000000;"><span style="position:absolute;top:390.480682px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1Cpj403-EMsJNTVBxL5mlXhIu-PkeKhdP/view?usp=sharing" target="_blank">Hierbabuena </a><a href="https://drive.google.com/file/d/1Cpj403-EMsJNTVBxL5mlXhIu-PkeKhdP/view?usp=sharing" target="_blank">es buena para </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:411.480682px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1Cpj403-EMsJNTVBxL5mlXhIu-PkeKhdP/view?usp=sharing" target="_blank">tratar   nauseas,   vómito   y </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;font-weight:bold;color:#000000;"><span style="position:absolute;top:311.559631px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1YB1aMZESsZitElOJWgCGqN6F7gbwYvGK/view?usp=sharing" target="_blank">Árnica </a><a href="https://drive.google.com/file/d/1YB1aMZESsZitElOJWgCGqN6F7gbwYvGK/view?usp=sharing" target="_blank">se utiliza para tratar </a></nobr></span><span style="position:absolute;top:332.559570px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1YB1aMZESsZitElOJWgCGqN6F7gbwYvGK/view?usp=sharing" target="_blank">cuadros inflamatorios y golpes, </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:353.559570px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1YB1aMZESsZitElOJWgCGqN6F7gbwYvGK/view?usp=sharing" target="_blank">contusiones, esguinces, etc. </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:432.480682px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1Cpj403-EMsJNTVBxL5mlXhIu-PkeKhdP/view?usp=sharing" target="_blank">desórdenes gastrointestinales. </a></nobr></span><span style="position:absolute;top:468.688538px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/13JoIfuyefP-9Y_4ruoROZ8_77hSdCM75/view?usp=sharing" target="_blank">Manzanilla </a><a href="https://drive.google.com/file/d/13JoIfuyefP-9Y_4ruoROZ8_77hSdCM75/view?usp=sharing" target="_blank">se utiliza para tratar </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:489.688538px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/13JoIfuyefP-9Y_4ruoROZ8_77hSdCM75/view?usp=sharing" target="_blank">la     fiebre,     inflamación, </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:510.688538px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/13JoIfuyefP-9Y_4ruoROZ8_77hSdCM75/view?usp=sharing" target="_blank">desordenes menstruales, etc. </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;font-weight:bold;color:#000000;"><span style="position:absolute;top:546.668823px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/18U6SYS56rgRpJCOgNhINFj_9A1ak1Mve/view?usp=sharing" target="_blank">Sábila </a><a href="https://drive.google.com/file/d/18U6SYS56rgRpJCOgNhINFj_9A1ak1Mve/view?usp=sharing" target="_blank">esta   planta   es </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:567.668823px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/18U6SYS56rgRpJCOgNhINFj_9A1ak1Mve/view?usp=sharing" target="_blank">antifúngica, antiséptica, antiviral, </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;text-decoration:underline;color:#000000;"><span style="position:absolute;top:588.668823px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/18U6SYS56rgRpJCOgNhINFj_9A1ak1Mve/view?usp=sharing" target="_blank">antibacteriana, antiinflamatoria, </a></nobr></span><span style="position:absolute;top:609.668823px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/18U6SYS56rgRpJCOgNhINFj_9A1ak1Mve/view?usp=sharing" target="_blank">antioxidante y muy usada para </a></nobr></span><span style="position:absolute;top:630.668823px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/18U6SYS56rgRpJCOgNhINFj_9A1ak1Mve/view?usp=sharing" target="_blank">cura heridas. </a></nobr></span></span></p><p><span style="font-family:Arial Unicode MS;font-size:13.165667px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:188.684647px;left:448.207855px"><nobr>¿ Q U É P L A N T A S </nobr></span></span></p><p><span style="font-family:Arial;font-size:13.165667px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:212.203171px;left:455.366333px"><nobr>M E D I C I N A L E S </nobr></span></span></p><p><span style="font-family:Arial;font-size:13.165667px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:235.721741px;left:470.756226px"><nobr>C O N O C E S ? </nobr></span></span></p><p><span style="font-family:Arial;font-size:12.502501px;font-weight:bold;color:#000000;"><span style="position:absolute;top:664.790039px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1fcuD45ctqPug05VOClDSXOYeNM1s9hYj/view?usp=sharing" target="_blank">Epazote </a><a href="https://drive.google.com/file/d/1fcuD45ctqPug05VOClDSXOYeNM1s9hYj/view?usp=sharing" target="_blank">las hojas se usan </a><a href="https://drive.google.com/file/d/1fcuD45ctqPug05VOClDSXOYeNM1s9hYj/view?usp=sharing" target="_blank">para </a></nobr></span><span style="position:absolute;top:685.790039px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1fcuD45ctqPug05VOClDSXOYeNM1s9hYj/view?usp=sharing" target="_blank">estimular el flujo sanguíneo o </a></nobr></span><span style="position:absolute;top:706.790039px;left:434.178070px"><nobr><a href="https://drive.google.com/file/d/1fcuD45ctqPug05VOClDSXOYeNM1s9hYj/view?usp=sharing" target="_blank">eliminar parásitos. </a></nobr></span></span></p><p><span style="font-family:Arial;font-size:8.288924px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:761.043213px;left:446.195404px"><nobr>PA R A M Á S I N F O R M A C I Ó N </nobr></span></span></p><p><span style="font-family:Arial;font-size:8.288924px;font-weight:bold;color:#EADEC4;"><span style="position:absolute;top:775.779053px;left:386.719482px"><nobr>D A C L I C K E N E L T E X T O C O R R E S P O N D I E N T E </nobr></span></span></p>']
+            }
+        },
+        mounted: function() {
+            this.$nextTick(function() {
+                this.pageNum = this.pageDatas.length;
+                this.pageContent = this.pageDatas[0];
+
+                this.setLeftMenuHeight();
+            })
+        },
+        watch: {
+            'currentPage': function(newVal, oldValue) {
+                // console.log('newVal ' + newVal, 'oldValue ' + oldValue);
+                if (newVal) {
+                    this.pageContent = this.pageDatas[this.currentPage - 1];
+                }
+            },
+            'zoomNum': function(newVal, oldValue) {
+                if (newVal) {
+                    this.zoomStyle = {
+                        'transform': 'scale(' + newVal + ')',
+                        '-webkit-transform': 'scale(' + newVal + ')',
+                        '-ms-transform': 'scale(' + newVal + ')',
+                        '-moz-transform': 'scale(' + newVal + ')',
+                        '-o-transform': 'scale(' + newVal + ')'
+                    }
+                }
+            }
+        },
+        methods: {
+            
+            changeCurrentPage: function(methods) {
+                switch (methods) {
+                    case 'first':
+                        this.currentPage = 1;
+                        break;
+                    case 'prev':
+                        if (this.currentPage > 1) {
+                            this.currentPage -= 1;
+                        }
+                        break;
+                    case 'next':
+                        if (this.currentPage < this.pageNum) {
+                            this.currentPage += 1;
+                        }
+                        break;
+                    case 'last':
+                        this.currentPage = this.pageNum;
+                        break;
+                }
+            },
+
+            gotoPage: function(page) {
+                console.log(page);
+                this.currentPage = page;
+            },
+            modifyZoom: function(type) {
+                switch (type) {
+                    case 'in':
+                        if (this.zoomNum < 2) {
+                            // this.zoomNum = (this.zoomNum + 0.1).toFixed(1);
+                            this.zoomNum = (parseFloat(this.zoomNum) + 0.1).toFixed(1);
+                        }
+                        break;
+                    case 'out':
+                        if (this.zoomNum > 0.5) {
+                            this.zoomNum = (parseFloat(this.zoomNum) - 0.1).toFixed(1);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                console.log(this.zoomNum);
+            },
+            setLeftMenuHeight: function() {
+                // this.asideHeight = document.body.scrollHeight - 60;
+                this.mainHeight = document.documentElement.clientHeight - 60 - 20;
+                // 60为头部导航高度， 46为menu高度， 40为上下padding
+                this.asideHeight = this.mainHeight - 20 - 46;
+            },
+            changePage: function(page) {
+                this.currentPage = page;
+                // this.pageContent = this.pageDatas[page - 1];
+            },
+            changeLeftMenu: function() {
+                this.ifMenuShow = !this.ifMenuShow;
+            }
+        }
+    });
+
+function gotoPage(page) {
+    console.log(page);
+    app.gotoPage(page);
+}
+
+</script>
+
+</html>
